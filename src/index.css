@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-[#f7f7f9] text-[#0b0f19] transition-colors duration-300 dark:bg-[#0b0f19] dark:text-[#f3f4f6];
+  }
+
+  ::selection {
+    @apply bg-indigo-500/30;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(120, 120, 140, 0.35) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: rgba(120, 120, 140, 0.35);
+    border-radius: 9999px;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl dark:bg-white/5;
+  }
+
+  .glass-border {
+    @apply border border-black/[0.06] dark:border-white/10;
+  }
+}
