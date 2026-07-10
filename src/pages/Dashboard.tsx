@@ -35,6 +35,7 @@ export function Dashboard() {
           storageUsedBytes={data?.storage_used_bytes ?? 0}
           isDark={isDark}
           onToggleDark={toggleDark}
+          isRefreshing={isFetching && !!data}
         />
       }
     >

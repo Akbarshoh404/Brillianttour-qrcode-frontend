@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
-import { Copy, Download, Eye, FileText, QrCode, RefreshCcw, Scan, Trash2 } from "lucide-react";
+import { Copy, Download, Eye, FileText, Loader2, QrCode, RefreshCcw, Scan, Trash2 } from "lucide-react";
+import { useState } from "react";
 
+import { QrImage } from "@/components/documents/QrImage";
 import { useToast } from "@/components/ui/Toast";
 import { copyToClipboard } from "@/utils/clipboard";
 import { downloadQrImage } from "@/utils/download";
@@ -14,11 +16,12 @@ interface DocumentCardProps {
   onPreviewQr: (document: Document) => void;
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatTile({ label, value, caption }: { label: string; value: string; caption?: string }) {
   return (
     <div className="rounded-xl bg-black/[0.03] px-3 py-2 dark:bg-white/[0.04]">
       <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">{label}</p>
       <p className="mt-0.5 truncate text-xs font-semibold text-gray-700 dark:text-gray-200">{value}</p>
+      {caption && <p className="truncate text-[10px] text-gray-400">{caption}</p>}
     </div>
   );
 }
@@ -28,31 +31,35 @@ function IconAction({
   label,
   onClick,
   danger,
+  isLoading,
 }: {
   icon: typeof Copy;
   label: string;
   onClick: () => void;
   danger?: boolean;
+  isLoading?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={isLoading}
       title={label}
       aria-label={label}
-      className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors ${
+      className={`flex h-9 w-9 items-center justify-center rounded-xl transition-colors disabled:cursor-wait ${
         danger
           ? "text-gray-400 hover:bg-red-500/10 hover:text-red-500"
           : "text-gray-400 hover:bg-black/[0.05] hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-gray-200"
       }`}
     >
-      <Icon className="h-4 w-4" />
+      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
     </button>
   );
 }
 
 export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: DocumentCardProps) {
   const { showToast } = useToast();
+  const [isDownloadingQr, setIsDownloadingQr] = useState(false);
 
   const handleCopyLink = async () => {
     const success = await copyToClipboard(document.qr_link);
@@ -60,12 +67,18 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
   };
 
   const handleDownloadQr = async () => {
+    setIsDownloadingQr(true);
     try {
       await downloadQrImage(document.qr_url, document.uuid);
     } catch {
       showToast("Couldn't download QR code.", "error");
+    } finally {
+      setIsDownloadingQr(false);
     }
   };
+
+  const hasScans = document.total_scans > 0;
+  const hasDownloads = document.total_downloads > 0;
 
   return (
     <motion.div
@@ -100,10 +113,10 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
         <button
           type="button"
           onClick={() => onPreviewQr(document)}
-          className="shrink-0 overflow-hidden rounded-xl border border-black/10 bg-white p-1 transition hover:scale-105 hover:border-indigo-300 dark:border-white/10"
+          className="group/qr relative shrink-0 overflow-hidden rounded-xl border border-black/10 bg-white p-1.5 transition hover:scale-105 hover:border-indigo-300 dark:border-white/10"
           title="Preview QR code"
         >
-          <img src={document.qr_url} alt={`QR code for ${document.title}`} className="h-11 w-11" />
+          <QrImage src={document.qr_url} alt={`QR code for ${document.title}`} size={44} />
         </button>
       </div>
 
@@ -115,17 +128,25 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
 
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div className="flex items-center gap-2 rounded-xl bg-black/[0.03] px-3 py-2 dark:bg-white/[0.04]">
-          <Scan className="h-3.5 w-3.5 text-indigo-400" />
+          <Scan className={`h-3.5 w-3.5 shrink-0 ${hasScans ? "text-indigo-400" : "text-gray-300 dark:text-gray-600"}`} />
           <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Scans</p>
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{document.total_scans}</p>
+            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+              {document.total_scans}
+              {hasScans && <span className="ml-1 font-normal text-gray-400">· {formatRelativeTime(document.last_scan)}</span>}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 rounded-xl bg-black/[0.03] px-3 py-2 dark:bg-white/[0.04]">
-          <Download className="h-3.5 w-3.5 text-indigo-400" />
+          <Download className={`h-3.5 w-3.5 shrink-0 ${hasDownloads ? "text-indigo-400" : "text-gray-300 dark:text-gray-600"}`} />
           <div className="min-w-0">
             <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Downloads</p>
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{document.total_downloads}</p>
+            <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+              {document.total_downloads}
+              {hasDownloads && (
+                <span className="ml-1 font-normal text-gray-400">· {formatRelativeTime(document.last_download)}</span>
+              )}
+            </p>
           </div>
         </div>
       </div>
@@ -152,7 +173,7 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
       </div>
 
       <div className="mt-2 flex items-center justify-between border-t border-black/[0.05] pt-2 dark:border-white/[0.06]">
-        <IconAction icon={QrCode} label="Download QR" onClick={handleDownloadQr} />
+        <IconAction icon={QrCode} label="Download QR" onClick={handleDownloadQr} isLoading={isDownloadingQr} />
         <IconAction icon={Copy} label="Copy QR Link" onClick={handleCopyLink} />
         <IconAction icon={RefreshCcw} label="Replace PDF" onClick={() => onReplace(document)} />
         <IconAction icon={Trash2} label="Delete PDF" danger onClick={() => onDelete(document)} />

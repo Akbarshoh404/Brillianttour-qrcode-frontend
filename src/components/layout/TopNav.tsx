@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { FileStack, HardDrive, Moon, Search, Sun, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -11,6 +12,7 @@ interface TopNavProps {
   storageUsedBytes: number;
   isDark: boolean;
   onToggleDark: () => void;
+  isRefreshing?: boolean;
 }
 
 export function TopNav({
@@ -21,9 +23,10 @@ export function TopNav({
   storageUsedBytes,
   isDark,
   onToggleDark,
+  isRefreshing,
 }: TopNavProps) {
   return (
-    <header className="glass glass-border sticky top-0 z-40 border-b">
+    <header className="glass glass-border sticky top-0 z-40 border-b relative">
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-4 px-6 py-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm">
@@ -74,6 +77,19 @@ export function TopNav({
           Upload
         </Button>
       </div>
+
+      <AnimatePresence>
+        {isRefreshing && (
+          <motion.div
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            style={{ transformOrigin: "left" }}
+            className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-500"
+          />
+        )}
+      </AnimatePresence>
     </header>
   );
 }
