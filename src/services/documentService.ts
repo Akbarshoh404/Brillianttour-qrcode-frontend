@@ -5,15 +5,25 @@ import type { Document, DocumentListResponse, ScanSummary } from "@/types";
 
 export type UploadProgressHandler = (percent: number) => void;
 
+export interface UploadOptions {
+  title?: string;
+  domainId?: number | null;
+  folderId?: number | null;
+  onProgress?: UploadProgressHandler;
+}
+
 function toPercent(event: AxiosProgressEvent): number {
   if (!event.total) return 0;
   return Math.round((event.loaded / event.total) * 100);
 }
 
 export const documentService = {
-  async list(search?: string): Promise<DocumentListResponse> {
+  async list(search?: string, folderId?: number | null): Promise<DocumentListResponse> {
     const { data } = await api.get<DocumentListResponse>("/documents", {
-      params: search ? { search } : undefined,
+      params: {
+        ...(search ? { search } : {}),
+        ...(folderId != null ? { folder_id: folderId } : {}),
+      },
     });
     return data;
   },
@@ -33,14 +43,16 @@ export const documentService = {
     return data;
   },
 
-  async upload(file: File, title: string | undefined, onProgress?: UploadProgressHandler): Promise<Document> {
+  async upload(file: File, options: UploadOptions = {}): Promise<Document> {
     const formData = new FormData();
     formData.append("file", file);
-    if (title) formData.append("title", title);
+    if (options.title) formData.append("title", options.title);
+    if (options.domainId != null) formData.append("domain_id", String(options.domainId));
+    if (options.folderId != null) formData.append("folder_id", String(options.folderId));
 
     const { data } = await api.post<Document>("/documents", formData, {
       headers: { "Content-Type": "multipart/form-data" },
-      onUploadProgress: (event) => onProgress?.(toPercent(event)),
+      onUploadProgress: (event) => options.onProgress?.(toPercent(event)),
     });
     return data;
   },
@@ -78,6 +90,12 @@ export const documentService = {
 
   async enable(uuid: string): Promise<Document> {
     const { data } = await api.post<Document>(`/documents/${uuid}/enable`);
+    return data;
+  },
+
+  /** Files a document into a different folder (or null to unfile it). */
+  async moveToFolder(uuid: string, folderId: number | null): Promise<Document> {
+    const { data } = await api.post<Document>(`/documents/${uuid}/move`, { folder_id: folderId });
     return data;
   },
 };

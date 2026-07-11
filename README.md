@@ -17,6 +17,13 @@ replace the file, copy the QR link, disable it, or move it to the trash.
 Expanding a card reveals a scan breakdown (countries, devices, browsers)
 and a switch to pause a QR code without deleting it.
 
+This grew from serving one business to serving several: a document can be
+deployed under any registered domain (so a bank's QR codes read
+`kapitalbank-docs.uz` while a tour operator's read their own domain,
+picked from a dropdown at upload time), and documents can be organized
+into folders — each folder pill along the top of the dashboard filters the
+grid to just that folder's files.
+
 ## Tech stack
 
 React 19, Vite, TypeScript, Tailwind CSS, React Router, TanStack Query,
@@ -30,12 +37,14 @@ src/
 │   ├── auth/          # ProtectedRoute
 │   ├── layout/          # TopNav, DashboardLayout
 │   ├── documents/         # DocumentCard (+ accordion detail), Trash card, upload/replace/delete modals, QR preview
-│   └── ui/                   # Button, Modal, Toast, Switch, Skeleton, EmptyState — generic primitives
-├── hooks/                        # useAuth (frontend-only password gate), useDocuments (TanStack Query), useDarkMode, useDebounce
-├── pages/                          # Login, Dashboard, Trash, NotFound
-├── services/                         # axios client + documentService (all API calls live here)
-├── types/                              # shared TypeScript types matching the backend's responses
-└── utils/                                # formatting, clipboard, file-download helpers
+│   ├── domains/            # AddDomainModal
+│   ├── folders/              # FolderNav (filter pills), AddFolderModal
+│   └── ui/                     # Button, Modal, Toast, Switch, Skeleton, EmptyState — generic primitives
+├── hooks/                          # useAuth (frontend-only password gate), useDocuments/useDomains/useFolders (TanStack Query), useDarkMode, useDebounce
+├── pages/                            # Login, Dashboard, Trash, NotFound
+├── services/                           # axios client + document/domain/folder services (all API calls live here)
+├── types/                                # shared TypeScript types matching the backend's responses
+└── utils/                                  # formatting, clipboard, file-download helpers
 ```
 
 ## Auth (frontend-only)
@@ -55,6 +64,26 @@ still open to anyone who has its URL, exactly as it always was.
 
 If real auth (backend-enforced, can't be bypassed by reading the JS) is
 ever needed, that's a backend change, not a frontend one.
+
+## Domains and folders
+
+Both are managed inline, right where you'd need them, rather than on a
+separate settings page:
+
+- **Domains** — the upload modal has a "Deploy to domain" dropdown listing
+  every domain the backend knows about, plus a `+` button that opens a
+  small form to register a new one on the spot. Picking a domain there
+  decides what `qr_link` (the URL actually encoded in the QR code) looks
+  like for that document — everything else about it stays on the backend's
+  own domain.
+- **Folders** — `FolderNav` renders a row of filter pills above the
+  document grid ("All files" + one per folder + document counts), each
+  with its own `+ New folder` action. The upload modal has a matching
+  folder dropdown, pre-selected to whatever folder you're currently
+  viewing. To move an *existing* document into a different folder, expand
+  its card ("Show details") — there's a folder select there that calls the
+  move endpoint, which physically relocates the file between Supabase
+  Storage buckets on the backend.
 
 ## Environment variables
 

@@ -1,5 +1,19 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Copy, Download, Eye, FileText, Loader2, PauseCircle, QrCode, RefreshCcw, Scan, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Copy,
+  Download,
+  Eye,
+  FileText,
+  Folder as FolderIcon,
+  Globe2,
+  Loader2,
+  PauseCircle,
+  QrCode,
+  RefreshCcw,
+  Scan,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 
 import { DocumentCardDetails } from "@/components/documents/DocumentCardDetails";
@@ -121,6 +135,22 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
               <Copy className="h-3 w-3" />
             </button>
           </div>
+          {(document.domain_name || document.folder_name) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {document.domain_name && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400">
+                  <Globe2 className="h-2.5 w-2.5" />
+                  {document.domain_name}
+                </span>
+              )}
+              {document.folder_name && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                  <FolderIcon className="h-2.5 w-2.5" />
+                  {document.folder_name}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <button
           type="button"

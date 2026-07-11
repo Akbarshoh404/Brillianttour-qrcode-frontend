@@ -13,6 +13,10 @@ export interface Document {
   is_active: boolean;
   deleted_at: string | null;
   purge_at: string | null;
+  domain_id: number | null;
+  domain_name: string | null;
+  folder_id: number | null;
+  folder_name: string | null;
   qr_url: string;
   view_url: string;
   download_url: string;

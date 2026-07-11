@@ -1,16 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { documentService, type UploadProgressHandler } from "@/services/documentService";
+import { documentService, type UploadOptions, type UploadProgressHandler } from "@/services/documentService";
 import type { DocumentListResponse, ScanSummary } from "@/types";
 
-export const documentsQueryKey = (search?: string) => ["documents", search ?? ""] as const;
+export const documentsQueryKey = (search?: string, folderId?: number | null) =>
+  ["documents", search ?? "", folderId ?? "all"] as const;
 export const trashQueryKey = ["trash"] as const;
 export const scanSummaryQueryKey = (uuid: string) => ["scan-summary", uuid] as const;
 
-export function useDocuments(search?: string) {
+export function useDocuments(search?: string, folderId?: number | null) {
   return useQuery<DocumentListResponse>({
-    queryKey: documentsQueryKey(search),
-    queryFn: () => documentService.list(search),
+    queryKey: documentsQueryKey(search, folderId),
+    queryFn: () => documentService.list(search, folderId),
     placeholderData: (previous) => previous,
   });
 }
@@ -34,17 +35,10 @@ export function useUploadDocument() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      file,
-      title,
-      onProgress,
-    }: {
-      file: File;
-      title?: string;
-      onProgress?: UploadProgressHandler;
-    }) => documentService.upload(file, title, onProgress),
+    mutationFn: ({ file, ...options }: { file: File } & UploadOptions) => documentService.upload(file, options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["folders"] });
     },
   });
 }
@@ -76,6 +70,7 @@ export function useDeleteDocument() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       queryClient.invalidateQueries({ queryKey: trashQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["folders"] });
     },
   });
 }
@@ -88,6 +83,7 @@ export function useRestoreDocument() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       queryClient.invalidateQueries({ queryKey: trashQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["folders"] });
     },
   });
 }
@@ -99,6 +95,7 @@ export function usePermanentlyDeleteDocument() {
     mutationFn: (uuid: string) => documentService.removePermanently(uuid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: trashQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["folders"] });
     },
   });
 }
@@ -111,6 +108,19 @@ export function useSetDocumentActive() {
       isActive ? documentService.enable(uuid) : documentService.disable(uuid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+  });
+}
+
+export function useMoveDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ uuid, folderId }: { uuid: string; folderId: number | null }) =>
+      documentService.moveToFolder(uuid, folderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["folders"] });
     },
   });
 }

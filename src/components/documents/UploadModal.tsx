@@ -1,32 +1,49 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { FileText, UploadCloud, X } from "lucide-react";
-import { useCallback, useState, type DragEvent as ReactDragEvent } from "react";
+import { FileText, Plus, UploadCloud, X } from "lucide-react";
+import { useCallback, useEffect, useState, type DragEvent as ReactDragEvent } from "react";
 import { useForm } from "react-hook-form";
 
+import { AddDomainModal } from "@/components/domains/AddDomainModal";
+import { AddFolderModal } from "@/components/folders/AddFolderModal";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { getApiErrorMessage } from "@/services/api";
 import { useUploadDocument } from "@/hooks/useDocuments";
+import { useDomains } from "@/hooks/useDomains";
+import { useFolders } from "@/hooks/useFolders";
 import { formatBytes } from "@/utils/format";
 
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultFolderId?: number | null;
 }
 
 interface UploadFormValues {
   title: string;
+  domainId: string;
+  folderId: string;
 }
 
-export function UploadModal({ isOpen, onClose }: UploadModalProps) {
+export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isAddDomainOpen, setIsAddDomainOpen] = useState(false);
+  const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
   const { showToast } = useToast();
   const upload = useUploadDocument();
+  const { data: domains } = useDomains();
+  const { data: folders } = useFolders();
 
-  const { register, handleSubmit, reset } = useForm<UploadFormValues>({ defaultValues: { title: "" } });
+  const { register, handleSubmit, reset, setValue } = useForm<UploadFormValues>({
+    defaultValues: { title: "", domainId: "", folderId: defaultFolderId ? String(defaultFolderId) : "" },
+  });
+
+  useEffect(() => {
+    if (isOpen) setValue("folderId", defaultFolderId ? String(defaultFolderId) : "");
+  }, [isOpen, defaultFolderId, setValue]);
 
   const resetAndClose = useCallback(() => {
     setFile(null);
@@ -52,7 +69,13 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const onSubmit = handleSubmit(async (values) => {
     if (!file) return;
     try {
-      await upload.mutateAsync({ file, title: values.title, onProgress: setProgress });
+      await upload.mutateAsync({
+        file,
+        title: values.title,
+        domainId: values.domainId ? Number(values.domainId) : null,
+        folderId: values.folderId ? Number(values.folderId) : null,
+        onProgress: setProgress,
+      });
       showToast("PDF uploaded and QR code generated.", "success");
       resetAndClose();
     } catch (error) {
@@ -125,6 +148,57 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Deploy to domain</label>
+            <div className="flex gap-1.5">
+              <select
+                {...register("domainId")}
+                className="w-full rounded-xl border border-black/10 bg-white/60 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-white/5 dark:text-gray-100"
+              >
+                {(domains ?? []).map((domain) => (
+                  <option key={domain.id ?? "default"} value={domain.id ?? ""}>
+                    {domain.name} ({domain.base_url.replace(/^https?:\/\//, "")})
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setIsAddDomainOpen(true)}
+                title="Add a domain"
+                className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-black/[0.05] hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-gray-200"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Folder</label>
+            <div className="flex gap-1.5">
+              <select
+                {...register("folderId")}
+                className="w-full rounded-xl border border-black/10 bg-white/60 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-white/5 dark:text-gray-100"
+              >
+                <option value="">No folder</option>
+                {(folders ?? []).map((folder) => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setIsAddFolderOpen(true)}
+                title="Add a folder"
+                className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-black/[0.05] hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-gray-200"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
         <AnimatePresence>
           {upload.isPending && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
@@ -149,6 +223,17 @@ export function UploadModal({ isOpen, onClose }: UploadModalProps) {
           </Button>
         </div>
       </form>
+
+      <AddDomainModal
+        isOpen={isAddDomainOpen}
+        onClose={() => setIsAddDomainOpen(false)}
+        onCreated={(domainId) => setValue("domainId", String(domainId))}
+      />
+      <AddFolderModal
+        isOpen={isAddFolderOpen}
+        onClose={() => setIsAddFolderOpen(false)}
+        onCreated={(folderId) => setValue("folderId", String(folderId))}
+      />
     </Modal>
   );
 }

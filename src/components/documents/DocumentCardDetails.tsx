@@ -1,7 +1,8 @@
-import { Globe2, Laptop2, MapPinOff, Power } from "lucide-react";
+import { Folder as FolderIcon, Globe2, Laptop2, MapPinOff, Power } from "lucide-react";
 
 import { Switch } from "@/components/ui/Switch";
-import { useScanSummary, useSetDocumentActive } from "@/hooks/useDocuments";
+import { useScanSummary, useSetDocumentActive, useMoveDocument } from "@/hooks/useDocuments";
+import { useFolders } from "@/hooks/useFolders";
 import { useToast } from "@/components/ui/Toast";
 import { getApiErrorMessage } from "@/services/api";
 import { formatDateTime, formatRelativeTime } from "@/utils/format";
@@ -50,11 +51,23 @@ export function DocumentCardDetails({ document }: { document: Document }) {
   const { showToast } = useToast();
   const { data: summary, isLoading } = useScanSummary(document.uuid, true);
   const setActive = useSetDocumentActive();
+  const moveDocument = useMoveDocument();
+  const { data: folders } = useFolders();
 
   const handleToggleActive = async (isActive: boolean) => {
     try {
       await setActive.mutateAsync({ uuid: document.uuid, isActive });
       showToast(isActive ? "QR code re-enabled." : "QR code disabled — visitors will see an unavailable page.", "success");
+    } catch (error) {
+      showToast(getApiErrorMessage(error), "error");
+    }
+  };
+
+  const handleMove = async (value: string) => {
+    const folderId = value ? Number(value) : null;
+    try {
+      const moved = await moveDocument.mutateAsync({ uuid: document.uuid, folderId });
+      showToast(moved.folder_name ? `Moved to "${moved.folder_name}".` : "Moved to unfiled.", "success");
     } catch (error) {
       showToast(getApiErrorMessage(error), "error");
     }
@@ -75,6 +88,29 @@ export function DocumentCardDetails({ document }: { document: Document }) {
           </div>
         </div>
         <Switch checked={document.is_active} onChange={handleToggleActive} disabled={setActive.isPending} label="Toggle QR code active" />
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl bg-black/[0.03] px-3.5 py-3 dark:bg-white/[0.04]">
+        <div className="flex items-center gap-2.5">
+          <FolderIcon className="h-4 w-4 text-gray-400" />
+          <div>
+            <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Folder</p>
+            <p className="text-[11px] text-gray-400">Moves the file between storage buckets.</p>
+          </div>
+        </div>
+        <select
+          value={document.folder_id ?? ""}
+          onChange={(e) => handleMove(e.target.value)}
+          disabled={moveDocument.isPending}
+          className="rounded-lg border border-black/10 bg-white/60 px-2.5 py-1.5 text-xs outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-wait dark:border-white/10 dark:bg-white/5 dark:text-gray-100"
+        >
+          <option value="">No folder</option>
+          {(folders ?? []).map((folder) => (
+            <option key={folder.id} value={folder.id}>
+              {folder.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">

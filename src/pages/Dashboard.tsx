@@ -5,6 +5,7 @@ import { DocumentGrid } from "@/components/documents/DocumentGrid";
 import { QrPreviewModal } from "@/components/documents/QrPreviewModal";
 import { ReplaceModal } from "@/components/documents/ReplaceModal";
 import { UploadModal } from "@/components/documents/UploadModal";
+import { FolderNav } from "@/components/folders/FolderNav";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TopNav } from "@/components/layout/TopNav";
 import { useDarkMode } from "@/hooks/useDarkMode";
@@ -16,13 +17,14 @@ export function Dashboard() {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [isDark, toggleDark] = useDarkMode();
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [replaceTarget, setReplaceTarget] = useState<Document | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [qrPreviewTarget, setQrPreviewTarget] = useState<Document | null>(null);
 
-  const { data, isLoading, isFetching } = useDocuments(debouncedSearch || undefined);
+  const { data, isLoading, isFetching } = useDocuments(debouncedSearch || undefined, selectedFolderId);
 
   return (
     <DashboardLayout
@@ -39,6 +41,8 @@ export function Dashboard() {
         />
       }
     >
+      <FolderNav selectedFolderId={selectedFolderId} onSelectFolder={setSelectedFolderId} />
+
       <DocumentGrid
         documents={data?.items ?? []}
         isLoading={isLoading || (isFetching && !data)}
@@ -49,7 +53,11 @@ export function Dashboard() {
         onPreviewQr={setQrPreviewTarget}
       />
 
-      <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
+      <UploadModal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        defaultFolderId={selectedFolderId}
+      />
       <ReplaceModal document={replaceTarget} onClose={() => setReplaceTarget(null)} />
       <DeleteDialog document={deleteTarget} onClose={() => setDeleteTarget(null)} />
       <QrPreviewModal document={qrPreviewTarget} onClose={() => setQrPreviewTarget(null)} />
