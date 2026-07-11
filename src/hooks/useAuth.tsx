@@ -1,50 +1,49 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 
-import { authService } from "@/services/authService";
+/**
+ * A simple client-side password gate for the dashboard — NOT real
+ * authentication. It doesn't call the backend at all; the backend has no
+ * concept of a login. This just stops someone from casually opening the
+ * dashboard URL without knowing the password. The password lives in
+ * VITE_DASHBOARD_PASSWORD (baked into the build) and is compared in the
+ * browser, so anyone who reads the JS bundle can find it — that's an
+ * accepted tradeoff for "keep the current visitor out," not a security
+ * boundary against a motivated attacker.
+ */
+
+const STORAGE_KEY = "pdf-qr-unlocked";
+const CONFIGURED_PASSWORD = import.meta.env.VITE_DASHBOARD_PASSWORD;
 
 interface AuthContextValue {
-  status: "checking" | "authenticated" | "unauthenticated";
-  username: string | null;
-  login: (username: string, password: string) => Promise<void>;
+  status: "authenticated" | "unauthenticated";
+  login: (password: string) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthContextValue["status"]>("checking");
-  const [username, setUsername] = useState<string | null>(null);
+  const [status, setStatus] = useState<AuthContextValue["status"]>(
+    sessionStorage.getItem(STORAGE_KEY) === "true" ? "authenticated" : "unauthenticated"
+  );
 
-  useEffect(() => {
-    if (!authService.isLoggedIn()) {
-      setStatus("unauthenticated");
-      return;
+  const login = async (password: string) => {
+    if (!CONFIGURED_PASSWORD) {
+      throw new Error("VITE_DASHBOARD_PASSWORD is not set. Add it to frontend/.env.");
     }
-    authService
-      .me()
-      .then((user) => {
-        setUsername(user.username);
-        setStatus("authenticated");
-      })
-      .catch(() => {
-        setStatus("unauthenticated");
-      });
-  }, []);
-
-  const login = async (usernameInput: string, password: string) => {
-    await authService.login(usernameInput, password);
-    const user = await authService.me();
-    setUsername(user.username);
+    if (password !== CONFIGURED_PASSWORD) {
+      throw new Error("Incorrect password.");
+    }
+    sessionStorage.setItem(STORAGE_KEY, "true");
     setStatus("authenticated");
   };
 
   const logout = () => {
-    authService.logout();
-    setUsername(null);
+    sessionStorage.removeItem(STORAGE_KEY);
     setStatus("unauthenticated");
   };
 
-  const value = useMemo(() => ({ status, username, login, logout }), [status, username]);
+  const value = useMemo(() => ({ status, login, logout }), [status]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

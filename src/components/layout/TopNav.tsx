@@ -27,7 +27,7 @@ export function TopNav({
   onToggleDark,
   isRefreshing,
 }: TopNavProps) {
-  const { logout, username } = useAuth();
+  const { logout } = useAuth();
 
   return (
     <header className="glass glass-border sticky top-0 z-40 border-b relative">
@@ -92,7 +92,7 @@ export function TopNav({
         <button
           type="button"
           onClick={logout}
-          title={username ? `Sign out (${username})` : "Sign out"}
+          title="Lock dashboard"
           className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition hover:bg-red-500/10 hover:text-red-500 dark:text-gray-300"
         >
           <LogOut className="h-4 w-4" />

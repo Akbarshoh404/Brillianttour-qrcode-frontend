@@ -31,28 +31,30 @@ src/
 │   ├── layout/          # TopNav, DashboardLayout
 │   ├── documents/         # DocumentCard (+ accordion detail), Trash card, upload/replace/delete modals, QR preview
 │   └── ui/                   # Button, Modal, Toast, Switch, Skeleton, EmptyState — generic primitives
-├── hooks/                        # useAuth, useDocuments (TanStack Query), useDarkMode, useDebounce
+├── hooks/                        # useAuth (frontend-only password gate), useDocuments (TanStack Query), useDarkMode, useDebounce
 ├── pages/                          # Login, Dashboard, Trash, NotFound
-├── services/                         # axios client + auth/document services (all API calls live here)
+├── services/                         # axios client + documentService (all API calls live here)
 ├── types/                              # shared TypeScript types matching the backend's responses
 └── utils/                                # formatting, clipboard, file-download helpers
 ```
 
-## Auth
+## Auth (frontend-only)
 
 `/login` is the only public route. Everything else — the dashboard (`/`)
 and the trash bin (`/trash`) — is wrapped in `ProtectedRoute`, which checks
-for a stored token and verifies it against `GET /auth/me` on load.
+a value in `sessionStorage`.
 
-The token is a JWT issued by the backend, stored in `localStorage`, and
-attached to every API request via an Axios request interceptor
-(`src/services/api.ts`). A response interceptor watches for `401`/`403`:
-on either, it clears the stored token and hard-redirects to `/login` — so
-an expired session recovers cleanly instead of the UI silently failing.
+This is deliberately **not real authentication** — the backend has no
+concept of a login and doesn't check anything. It's a password prompt that
+gates the dashboard *page*, comparing what's typed against
+`VITE_DASHBOARD_PASSWORD`, which gets baked into the JS bundle at build
+time. Anyone who opens the browser's dev tools and reads the bundle can
+find the password. That's an accepted tradeoff for "keep casual visitors
+off the dashboard," not a security boundary — the backend API itself is
+still open to anyone who has its URL, exactly as it always was.
 
-There's no registration or password reset UI here because there's no
-multi-user system on the backend — one shared credential, set via env vars
-on the backend, is the whole auth model.
+If real auth (backend-enforced, can't be bypassed by reading the JS) is
+ever needed, that's a backend change, not a frontend one.
 
 ## Environment variables
 
@@ -61,6 +63,7 @@ Copy `.env.example` to `.env`:
 | Variable | What it's for |
 |---|---|
 | `VITE_API_URL` | Base URL of the backend API, no trailing slash |
+| `VITE_DASHBOARD_PASSWORD` | Password required to unlock the dashboard UI (frontend-only gate, see above) |
 
 **Important:** Vite bakes `VITE_*` variables into the JS bundle at **build
 time**, not at runtime. If you deploy using the `Dockerfile` in this repo,
@@ -78,9 +81,9 @@ copy .env.example .env    # fill in VITE_API_URL
 npm run dev
 ```
 
-Dashboard is at `http://localhost:5173`. You'll need the backend running
-too (see the backend repo's README), with `ADMIN_USERNAME`/`ADMIN_PASSWORD`
-set there — that's what you'll log in with.
+Dashboard is at `http://localhost:5173`, gated by whatever password you set
+in `VITE_DASHBOARD_PASSWORD`. You'll also need the backend running (see the
+backend repo's README) for the document list to load anything.
 
 ## Building for production
 
@@ -106,12 +109,11 @@ Output goes to `dist/` — a fully static site, servable from anywhere
 
 ## How it talks to the backend
 
-All API calls go through `src/services/api.ts` (a single Axios instance,
-with the auth interceptors described above) and per-resource service
-modules (`authService.ts`, `documentService.ts`) with typed wrappers per
-endpoint. Server state (the document list, the trash list, per-document
-scan summaries) is managed with TanStack Query — uploads, replacements,
-deletes, restores, and disable/enable toggles are all mutations that
-automatically invalidate and refetch the relevant list on success, so the
-UI always reflects what's actually in the database without manual state
-juggling.
+All API calls go through `src/services/api.ts` (a single Axios instance)
+and `documentService.ts` (typed wrappers per endpoint) — no auth headers
+attached, since the backend doesn't check for any. Server state (the
+document list, the trash list, per-document scan summaries) is managed
+with TanStack Query — uploads, replacements, deletes, restores, and
+disable/enable toggles are all mutations that automatically invalidate and
+refetch the relevant list on success, so the UI always reflects what's
+actually in the database without manual state juggling.
