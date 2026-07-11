@@ -14,11 +14,12 @@ interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 disabled:hover:bg-indigo-600",
+    "bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_1px_2px_rgba(79,70,229,0.15),0_4px_12px_rgba(79,70,229,0.25)] hover:from-indigo-400 hover:to-indigo-500 disabled:hover:from-indigo-500 disabled:hover:to-indigo-600",
   secondary:
-    "bg-black/[0.04] text-gray-900 hover:bg-black/[0.07] dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15",
+    "bg-black/[0.04] text-gray-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-black/[0.07] dark:bg-white/10 dark:text-gray-100 dark:shadow-none dark:hover:bg-white/15",
   ghost: "text-gray-600 hover:bg-black/[0.04] dark:text-gray-300 dark:hover:bg-white/10",
-  danger: "bg-red-600 text-white hover:bg-red-500 disabled:hover:bg-red-600",
+  danger:
+    "bg-gradient-to-b from-red-500 to-red-600 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_12px_rgba(220,38,38,0.25)] hover:from-red-400 hover:to-red-500 disabled:hover:from-red-500 disabled:hover:to-red-600",
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

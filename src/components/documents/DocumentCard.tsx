@@ -7,6 +7,7 @@ import {
   FileText,
   Folder as FolderIcon,
   Globe2,
+  Link2,
   Loader2,
   PauseCircle,
   QrCode,
@@ -26,6 +27,8 @@ import type { Document } from "@/types";
 
 interface DocumentCardProps {
   document: Document;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
   onReplace: (document: Document) => void;
   onDelete: (document: Document) => void;
   onPreviewQr: (document: Document) => void;
@@ -72,10 +75,9 @@ function IconAction({
   );
 }
 
-export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: DocumentCardProps) {
+export function DocumentCard({ document, isExpanded, onToggleExpand, onReplace, onDelete, onPreviewQr }: DocumentCardProps) {
   const { showToast } = useToast();
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleCopyLink = async () => {
     const success = await copyToClipboard(document.qr_link);
@@ -95,6 +97,7 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
 
   const hasScans = document.total_scans > 0;
   const hasDownloads = document.total_downloads > 0;
+  const displayLink = document.qr_link.replace(/^https?:\/\//, "");
 
   return (
     <motion.div
@@ -162,7 +165,18 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
         </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <button
+        type="button"
+        onClick={handleCopyLink}
+        title="Copy QR link"
+        className="mt-3 flex w-full items-center gap-2 rounded-xl bg-indigo-500/5 px-3 py-2 text-left transition hover:bg-indigo-500/10"
+      >
+        <Link2 className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
+        <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-indigo-600 dark:text-indigo-300">{displayLink}</span>
+        <Copy className="h-3 w-3 shrink-0 text-indigo-400" />
+      </button>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
         <StatTile label="Size" value={document.file_size_readable} />
         <StatTile label="Uploaded" value={formatDate(document.created_at)} />
         <StatTile label="Updated" value={formatRelativeTime(document.updated_at)} />
@@ -207,7 +221,7 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
           href={document.download_url}
           target="_blank"
           rel="noreferrer"
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-indigo-500"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-600 px-3 py-2 text-xs font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_8px_rgba(79,70,229,0.25)] transition hover:from-indigo-400 hover:to-indigo-500"
         >
           <Download className="h-3.5 w-3.5" />
           Download
@@ -223,7 +237,7 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
         </div>
         <button
           type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
+          onClick={onToggleExpand}
           className="flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-medium text-gray-500 transition hover:bg-black/[0.05] hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200"
         >
           {isExpanded ? "Hide details" : "Show details"}

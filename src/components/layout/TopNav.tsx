@@ -30,7 +30,7 @@ export function TopNav({
   const { logout } = useAuth();
 
   return (
-    <header className="glass glass-border sticky top-0 z-40 border-b relative">
+    <header className="glass glass-border relative sticky top-0 z-40 border-b shadow-[0_1px_0_rgba(0,0,0,0.02),0_8px_24px_-12px_rgba(0,0,0,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.02),0_8px_24px_-12px_rgba(0,0,0,0.4)]">
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-4 px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm">

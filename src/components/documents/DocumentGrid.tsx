@@ -1,9 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 
 import { DocumentCard } from "@/components/documents/DocumentCard";
 import { DocumentCardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { Document } from "@/types";
+
+const COLUMNS = 2; // must match the lg:grid-cols-2 below
 
 interface DocumentGridProps {
   documents: Document[];
@@ -24,6 +27,20 @@ export function DocumentGrid({
   onDelete,
   onPreviewQr,
 }: DocumentGridProps) {
+  // Keyed by row index so expanding one card also expands whichever card
+  // shares its row in the 2-column grid — a single card taller than its
+  // neighbor looks broken, so rows expand together.
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+  const toggleRow = (rowIndex: number) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowIndex)) next.delete(rowIndex);
+      else next.add(rowIndex);
+      return next;
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -41,15 +58,20 @@ export function DocumentGrid({
   return (
     <motion.div layout className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <AnimatePresence mode="popLayout">
-        {documents.map((document) => (
-          <DocumentCard
-            key={document.uuid}
-            document={document}
-            onReplace={onReplace}
-            onDelete={onDelete}
-            onPreviewQr={onPreviewQr}
-          />
-        ))}
+        {documents.map((document, index) => {
+          const rowIndex = Math.floor(index / COLUMNS);
+          return (
+            <DocumentCard
+              key={document.uuid}
+              document={document}
+              isExpanded={expandedRows.has(rowIndex)}
+              onToggleExpand={() => toggleRow(rowIndex)}
+              onReplace={onReplace}
+              onDelete={onDelete}
+              onPreviewQr={onPreviewQr}
+            />
+          );
+        })}
       </AnimatePresence>
     </motion.div>
   );

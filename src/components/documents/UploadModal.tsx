@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { FileText, Plus, UploadCloud, X } from "lucide-react";
+import { FileText, UploadCloud, X } from "lucide-react";
 import { useCallback, useEffect, useState, type DragEvent as ReactDragEvent } from "react";
 import { useForm } from "react-hook-form";
 
@@ -7,6 +7,7 @@ import { AddDomainModal } from "@/components/domains/AddDomainModal";
 import { AddFolderModal } from "@/components/folders/AddFolderModal";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { getApiErrorMessage } from "@/services/api";
 import { useUploadDocument } from "@/hooks/useDocuments";
@@ -22,14 +23,14 @@ interface UploadModalProps {
 
 interface UploadFormValues {
   title: string;
-  domainId: string;
-  folderId: string;
 }
 
 export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [domainId, setDomainId] = useState("");
+  const [folderId, setFolderId] = useState("");
   const [isAddDomainOpen, setIsAddDomainOpen] = useState(false);
   const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
   const { showToast } = useToast();
@@ -37,17 +38,16 @@ export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadM
   const { data: domains } = useDomains();
   const { data: folders } = useFolders();
 
-  const { register, handleSubmit, reset, setValue } = useForm<UploadFormValues>({
-    defaultValues: { title: "", domainId: "", folderId: defaultFolderId ? String(defaultFolderId) : "" },
-  });
+  const { register, handleSubmit, reset } = useForm<UploadFormValues>({ defaultValues: { title: "" } });
 
   useEffect(() => {
-    if (isOpen) setValue("folderId", defaultFolderId ? String(defaultFolderId) : "");
-  }, [isOpen, defaultFolderId, setValue]);
+    if (isOpen) setFolderId(defaultFolderId ? String(defaultFolderId) : "");
+  }, [isOpen, defaultFolderId]);
 
   const resetAndClose = useCallback(() => {
     setFile(null);
     setProgress(0);
+    setDomainId("");
     reset();
     onClose();
   }, [onClose, reset]);
@@ -72,8 +72,8 @@ export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadM
       await upload.mutateAsync({
         file,
         title: values.title,
-        domainId: values.domainId ? Number(values.domainId) : null,
-        folderId: values.folderId ? Number(values.folderId) : null,
+        domainId: domainId ? Number(domainId) : null,
+        folderId: folderId ? Number(folderId) : null,
         onProgress: setProgress,
       });
       showToast("PDF uploaded and QR code generated.", "success");
@@ -83,9 +83,26 @@ export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadM
     }
   });
 
+  const domainOptions = (domains ?? []).map((domain) => ({
+    value: domain.id != null ? String(domain.id) : "",
+    label: domain.name,
+    sublabel: domain.base_url.replace(/^https?:\/\//, ""),
+  }));
+
+  const folderOptions = [
+    { value: "", label: "No folder" },
+    ...(folders ?? []).map((folder) => ({ value: String(folder.id), label: folder.name })),
+  ];
+
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Upload PDF" description="Drag & drop a file or browse to select one.">
-      <form onSubmit={onSubmit} className="space-y-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={resetAndClose}
+      title="Upload PDF"
+      description="Drag & drop a file or browse to select one."
+      maxWidthClassName="max-w-lg"
+    >
+      <form onSubmit={onSubmit} className="space-y-5">
         {!file ? (
           <label
             onDragOver={(e) => {
@@ -94,10 +111,10 @@ export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadM
             }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
-            className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors ${
+            className={`flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed px-6 py-16 text-center transition-all ${
               isDragging
-                ? "border-indigo-500 bg-indigo-500/5"
-                : "border-black/10 hover:border-black/20 dark:border-white/15 dark:hover:border-white/25"
+                ? "scale-[1.01] border-indigo-500 bg-indigo-500/5"
+                : "border-black/10 hover:border-black/20 hover:bg-black/[0.015] dark:border-white/15 dark:hover:border-white/25 dark:hover:bg-white/[0.02]"
             }`}
           >
             <input
@@ -106,13 +123,19 @@ export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadM
               className="hidden"
               onChange={(e) => pickFile(e.target.files?.[0])}
             />
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
-              <UploadCloud className="h-6 w-6" />
+            <motion.div
+              animate={isDragging ? { scale: 1.08, y: -4 } : { scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-glow"
+            >
+              <UploadCloud className="h-8 w-8" />
+            </motion.div>
+            <div>
+              <p className="text-base font-semibold text-gray-800 dark:text-gray-100">
+                Drop your PDF here, or <span className="text-indigo-500">browse</span>
+              </p>
+              <p className="mt-1 text-xs text-gray-400">PDF only, up to 50MB</p>
             </div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Drop your PDF here, or <span className="text-indigo-500">browse</span>
-            </p>
-            <p className="text-xs text-gray-400">PDF only, up to 50MB</p>
           </label>
         ) : (
           <div className="flex items-center gap-3 rounded-2xl border border-black/10 p-4 dark:border-white/10">
@@ -151,51 +174,24 @@ export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadM
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Deploy to domain</label>
-            <div className="flex gap-1.5">
-              <select
-                {...register("domainId")}
-                className="w-full rounded-xl border border-black/10 bg-white/60 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-white/5 dark:text-gray-100"
-              >
-                {(domains ?? []).map((domain) => (
-                  <option key={domain.id ?? "default"} value={domain.id ?? ""}>
-                    {domain.name} ({domain.base_url.replace(/^https?:\/\//, "")})
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setIsAddDomainOpen(true)}
-                title="Add a domain"
-                className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-black/[0.05] hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-gray-200"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
+            <Select
+              value={domainId}
+              onChange={setDomainId}
+              options={domainOptions}
+              onAddNew={() => setIsAddDomainOpen(true)}
+              addNewLabel="Add a new domain"
+            />
           </div>
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Folder</label>
-            <div className="flex gap-1.5">
-              <select
-                {...register("folderId")}
-                className="w-full rounded-xl border border-black/10 bg-white/60 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/10 dark:bg-white/5 dark:text-gray-100"
-              >
-                <option value="">No folder</option>
-                {(folders ?? []).map((folder) => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => setIsAddFolderOpen(true)}
-                title="Add a folder"
-                className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl text-gray-400 transition hover:bg-black/[0.05] hover:text-gray-700 dark:hover:bg-white/10 dark:hover:text-gray-200"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
+            <Select
+              value={folderId}
+              onChange={setFolderId}
+              options={folderOptions}
+              onAddNew={() => setIsAddFolderOpen(true)}
+              addNewLabel="Add a new folder"
+            />
           </div>
         </div>
 
@@ -227,12 +223,12 @@ export function UploadModal({ isOpen, onClose, defaultFolderId = null }: UploadM
       <AddDomainModal
         isOpen={isAddDomainOpen}
         onClose={() => setIsAddDomainOpen(false)}
-        onCreated={(domainId) => setValue("domainId", String(domainId))}
+        onCreated={(newDomainId) => setDomainId(String(newDomainId))}
       />
       <AddFolderModal
         isOpen={isAddFolderOpen}
         onClose={() => setIsAddFolderOpen(false)}
-        onCreated={(folderId) => setValue("folderId", String(folderId))}
+        onCreated={(newFolderId) => setFolderId(String(newFolderId))}
       />
     </Modal>
   );

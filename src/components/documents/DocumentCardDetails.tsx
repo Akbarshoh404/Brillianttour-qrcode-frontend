@@ -1,5 +1,6 @@
 import { Folder as FolderIcon, Globe2, Laptop2, MapPinOff, Power } from "lucide-react";
 
+import { Select } from "@/components/ui/Select";
 import { Switch } from "@/components/ui/Switch";
 import { useScanSummary, useSetDocumentActive, useMoveDocument } from "@/hooks/useDocuments";
 import { useFolders } from "@/hooks/useFolders";
@@ -98,19 +99,17 @@ export function DocumentCardDetails({ document }: { document: Document }) {
             <p className="text-[11px] text-gray-400">Moves the file between storage buckets.</p>
           </div>
         </div>
-        <select
-          value={document.folder_id ?? ""}
-          onChange={(e) => handleMove(e.target.value)}
-          disabled={moveDocument.isPending}
-          className="rounded-lg border border-black/10 bg-white/60 px-2.5 py-1.5 text-xs outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-wait dark:border-white/10 dark:bg-white/5 dark:text-gray-100"
-        >
-          <option value="">No folder</option>
-          {(folders ?? []).map((folder) => (
-            <option key={folder.id} value={folder.id}>
-              {folder.name}
-            </option>
-          ))}
-        </select>
+        <div className="w-40">
+          <Select
+            value={document.folder_id != null ? String(document.folder_id) : ""}
+            onChange={handleMove}
+            disabled={moveDocument.isPending}
+            options={[
+              { value: "", label: "No folder" },
+              ...(folders ?? []).map((folder) => ({ value: String(folder.id), label: folder.name })),
+            ]}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
