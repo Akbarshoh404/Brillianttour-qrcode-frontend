@@ -1,7 +1,8 @@
-import { motion } from "framer-motion";
-import { Copy, Download, Eye, FileText, Loader2, QrCode, RefreshCcw, Scan, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, Copy, Download, Eye, FileText, Loader2, PauseCircle, QrCode, RefreshCcw, Scan, Trash2 } from "lucide-react";
 import { useState } from "react";
 
+import { DocumentCardDetails } from "@/components/documents/DocumentCardDetails";
 import { QrImage } from "@/components/documents/QrImage";
 import { useToast } from "@/components/ui/Toast";
 import { copyToClipboard } from "@/utils/clipboard";
@@ -60,6 +61,7 @@ function IconAction({
 export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: DocumentCardProps) {
   const { showToast } = useToast();
   const [isDownloadingQr, setIsDownloadingQr] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleCopyLink = async () => {
     const success = await copyToClipboard(document.qr_link);
@@ -88,16 +90,26 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ type: "spring", stiffness: 300, damping: 28 }}
       whileHover={{ y: -3 }}
-      className="glass glass-border group flex flex-col rounded-3xl p-5 shadow-card transition-shadow hover:shadow-glow dark:shadow-card-dark"
+      className={`glass glass-border group flex flex-col rounded-3xl p-5 shadow-card transition-shadow hover:shadow-glow dark:shadow-card-dark ${
+        !document.is_active ? "opacity-70" : ""
+      }`}
     >
       <div className="flex items-start gap-3.5">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm">
           <FileText className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-50" title={document.title}>
-            {document.title}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-50" title={document.title}>
+              {document.title}
+            </h3>
+            {!document.is_active && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                <PauseCircle className="h-3 w-3" />
+                Disabled
+              </span>
+            )}
+          </div>
           <div className="mt-1 flex items-center gap-1.5">
             <p className="truncate font-mono text-[11px] text-gray-400">{document.uuid}</p>
             <button
@@ -173,11 +185,39 @@ export function DocumentCard({ document, onReplace, onDelete, onPreviewQr }: Doc
       </div>
 
       <div className="mt-2 flex items-center justify-between border-t border-black/[0.05] pt-2 dark:border-white/[0.06]">
-        <IconAction icon={QrCode} label="Download QR" onClick={handleDownloadQr} isLoading={isDownloadingQr} />
-        <IconAction icon={Copy} label="Copy QR Link" onClick={handleCopyLink} />
-        <IconAction icon={RefreshCcw} label="Replace PDF" onClick={() => onReplace(document)} />
-        <IconAction icon={Trash2} label="Delete PDF" danger onClick={() => onDelete(document)} />
+        <div className="flex items-center">
+          <IconAction icon={QrCode} label="Download QR" onClick={handleDownloadQr} isLoading={isDownloadingQr} />
+          <IconAction icon={Copy} label="Copy QR Link" onClick={handleCopyLink} />
+          <IconAction icon={RefreshCcw} label="Replace PDF" onClick={() => onReplace(document)} />
+          <IconAction icon={Trash2} label="Delete PDF" danger onClick={() => onDelete(document)} />
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-medium text-gray-500 transition hover:bg-black/[0.05] hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200"
+        >
+          {isExpanded ? "Hide details" : "Show details"}
+          <motion.span animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown className="h-3.5 w-3.5" />
+          </motion.span>
+        </button>
       </div>
+
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4">
+              <DocumentCardDetails document={document} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

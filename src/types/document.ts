@@ -10,6 +10,9 @@ export interface Document {
   total_downloads: number;
   last_scan: string | null;
   last_download: string | null;
+  is_active: boolean;
+  deleted_at: string | null;
+  purge_at: string | null;
   qr_url: string;
   view_url: string;
   download_url: string;
@@ -20,6 +23,39 @@ export interface DocumentListResponse {
   items: Document[];
   total: number;
   storage_used_bytes: number;
+}
+
+export interface ScanEvent {
+  id: number;
+  document_id: number;
+  country: string | null;
+  city: string | null;
+  region: string | null;
+  isp: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  timezone: string | null;
+  browser: string | null;
+  operating_system: string | null;
+  device: string | null;
+  user_agent: string | null;
+  ip: string | null;
+  referrer: string | null;
+  language: string | null;
+  created_at: string;
+}
+
+export interface ScanBreakdownEntry {
+  label: string;
+  count: number;
+}
+
+export interface ScanSummary {
+  total_scans: number;
+  by_country: ScanBreakdownEntry[];
+  by_device: ScanBreakdownEntry[];
+  by_browser: ScanBreakdownEntry[];
+  recent: ScanEvent[];
 }
 
 export interface ApiErrorShape {

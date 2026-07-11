@@ -1,7 +1,7 @@
 import type { AxiosProgressEvent } from "axios";
 
 import { api } from "@/services/api";
-import type { Document, DocumentListResponse } from "@/types";
+import type { Document, DocumentListResponse, ScanSummary } from "@/types";
 
 export type UploadProgressHandler = (percent: number) => void;
 
@@ -18,8 +18,18 @@ export const documentService = {
     return data;
   },
 
+  async listTrash(): Promise<DocumentListResponse> {
+    const { data } = await api.get<DocumentListResponse>("/documents/trash");
+    return data;
+  },
+
   async get(uuid: string): Promise<Document> {
     const { data } = await api.get<Document>(`/documents/${uuid}`);
+    return data;
+  },
+
+  async scanSummary(uuid: string): Promise<ScanSummary> {
+    const { data } = await api.get<ScanSummary>(`/documents/${uuid}/scans/summary`);
     return data;
   },
 
@@ -46,7 +56,28 @@ export const documentService = {
     return data;
   },
 
+  /** Moves a document to the trash (recoverable for ~7 days). */
   async remove(uuid: string): Promise<void> {
     await api.delete(`/documents/${uuid}`);
+  },
+
+  async restore(uuid: string): Promise<Document> {
+    const { data } = await api.post<Document>(`/documents/${uuid}/restore`);
+    return data;
+  },
+
+  /** Irreversible — only for documents already in the trash. */
+  async removePermanently(uuid: string): Promise<void> {
+    await api.delete(`/documents/trash/${uuid}`);
+  },
+
+  async disable(uuid: string): Promise<Document> {
+    const { data } = await api.post<Document>(`/documents/${uuid}/disable`);
+    return data;
+  },
+
+  async enable(uuid: string): Promise<Document> {
+    const { data } = await api.post<Document>(`/documents/${uuid}/enable`);
+    return data;
   },
 };

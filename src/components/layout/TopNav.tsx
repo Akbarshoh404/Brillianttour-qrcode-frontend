@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { FileStack, HardDrive, Moon, Search, Sun, Upload } from "lucide-react";
+import { FileStack, HardDrive, LogOut, Moon, Search, Sun, Trash2, Upload } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/hooks/useAuth";
 import { formatBytes } from "@/utils/format";
 
 interface TopNavProps {
@@ -25,10 +27,12 @@ export function TopNav({
   onToggleDark,
   isRefreshing,
 }: TopNavProps) {
+  const { logout, username } = useAuth();
+
   return (
     <header className="glass glass-border sticky top-0 z-40 border-b relative">
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-4 px-6 py-4">
-        <div className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm">
             <FileStack className="h-5 w-5" />
           </div>
@@ -36,7 +40,7 @@ export function TopNav({
             <h1 className="text-sm font-semibold text-gray-900 dark:text-gray-50">PDF Manager</h1>
             <p className="text-[11px] text-gray-400">Internal QR document tool</p>
           </div>
-        </div>
+        </Link>
 
         <div className="relative ml-2 min-w-[200px] flex-1">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -63,6 +67,14 @@ export function TopNav({
           </div>
         </div>
 
+        <Link
+          to="/trash"
+          title="Trash"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition hover:bg-black/[0.05] dark:text-gray-300 dark:hover:bg-white/10"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Link>
+
         <button
           type="button"
           onClick={onToggleDark}
@@ -76,6 +88,15 @@ export function TopNav({
           <Upload className="h-4 w-4" />
           Upload
         </Button>
+
+        <button
+          type="button"
+          onClick={logout}
+          title={username ? `Sign out (${username})` : "Sign out"}
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition hover:bg-red-500/10 hover:text-red-500 dark:text-gray-300"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
 
       <AnimatePresence>
