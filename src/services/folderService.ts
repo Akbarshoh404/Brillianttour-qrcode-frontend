@@ -12,7 +12,7 @@ export const folderService = {
     return data;
   },
 
-  async remove(id: number): Promise<void> {
-    await api.delete(`/folders/${id}`);
+  async remove(id: number, force = false): Promise<void> {
+    await api.delete(`/folders/${id}`, { params: force ? { force: true } : undefined });
   },
 };

@@ -27,10 +27,11 @@ export function useDeleteFolder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => folderService.remove(id),
+    mutationFn: ({ id, force }: { id: number; force?: boolean }) => folderService.remove(id, force),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: foldersQueryKey });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["trash"] });
     },
   });
 }

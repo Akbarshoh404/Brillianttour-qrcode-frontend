@@ -3,8 +3,10 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { PermanentDeleteAllDialog } from "@/components/documents/PermanentDeleteAllDialog";
 import { PermanentDeleteDialog } from "@/components/documents/PermanentDeleteDialog";
 import { TrashCard } from "@/components/documents/TrashCard";
+import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DocumentCardSkeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
@@ -18,6 +20,7 @@ export function Trash() {
   const { showToast } = useToast();
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [restoringUuid, setRestoringUuid] = useState<string | null>(null);
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
 
   const handleRestore = async (document: Document) => {
     setRestoringUuid(document.uuid);
@@ -41,7 +44,7 @@ export function Trash() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-1 items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-400/20 text-gray-500 dark:text-gray-400">
               <Trash2 className="h-4 w-4" />
             </div>
@@ -50,6 +53,12 @@ export function Trash() {
               <p className="text-[11px] text-gray-400">Deleted documents — permanently removed after 7 days</p>
             </div>
           </div>
+          {!!data?.items.length && (
+            <Button variant="danger" size="sm" onClick={() => setIsDeleteAllOpen(true)}>
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete all
+            </Button>
+          )}
         </div>
       </header>
 
@@ -80,6 +89,11 @@ export function Trash() {
       </main>
 
       <PermanentDeleteDialog document={deleteTarget} onClose={() => setDeleteTarget(null)} />
+      <PermanentDeleteAllDialog
+        isOpen={isDeleteAllOpen}
+        count={data?.items.length ?? 0}
+        onClose={() => setIsDeleteAllOpen(false)}
+      />
     </div>
   );
 }

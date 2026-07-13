@@ -1,7 +1,9 @@
+import type { AxiosError } from "axios";
 import { Folder as FolderIcon, Plus, X } from "lucide-react";
 import { useState } from "react";
 
 import { AddFolderModal } from "@/components/folders/AddFolderModal";
+import { ForceDeleteFolderDialog } from "@/components/folders/ForceDeleteFolderDialog";
 import { useToast } from "@/components/ui/Toast";
 import { useDeleteFolder, useFolders } from "@/hooks/useFolders";
 import { getApiErrorMessage } from "@/services/api";
@@ -17,12 +19,29 @@ export function FolderNav({ selectedFolderId, onSelectFolder }: FolderNavProps) 
   const deleteFolder = useDeleteFolder();
   const { showToast } = useToast();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [forceDeleteTarget, setForceDeleteTarget] = useState<Folder | null>(null);
 
   const handleDelete = async (folder: Folder) => {
     try {
-      await deleteFolder.mutateAsync(folder.id);
+      await deleteFolder.mutateAsync({ id: folder.id });
       showToast(`Folder "${folder.name}" deleted.`, "success");
       if (selectedFolderId === folder.id) onSelectFolder(null);
+    } catch (error) {
+      if ((error as AxiosError)?.response?.status === 409) {
+        setForceDeleteTarget(folder);
+        return;
+      }
+      showToast(getApiErrorMessage(error), "error");
+    }
+  };
+
+  const handleForceDelete = async () => {
+    if (!forceDeleteTarget) return;
+    try {
+      await deleteFolder.mutateAsync({ id: forceDeleteTarget.id, force: true });
+      showToast(`Folder "${forceDeleteTarget.name}" and its documents deleted.`, "success");
+      if (selectedFolderId === forceDeleteTarget.id) onSelectFolder(null);
+      setForceDeleteTarget(null);
     } catch (error) {
       showToast(getApiErrorMessage(error), "error");
     }
@@ -87,6 +106,12 @@ export function FolderNav({ selectedFolderId, onSelectFolder }: FolderNavProps) 
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
         onCreated={(folderId) => onSelectFolder(folderId)}
+      />
+      <ForceDeleteFolderDialog
+        folder={forceDeleteTarget}
+        onClose={() => setForceDeleteTarget(null)}
+        onConfirm={handleForceDelete}
+        isDeleting={deleteFolder.isPending}
       />
     </div>
   );

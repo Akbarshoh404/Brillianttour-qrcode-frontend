@@ -56,7 +56,7 @@ export function Select({
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={disabled}
-        className="flex w-full items-center justify-between gap-2 rounded-xl border border-black/10 bg-white/60 px-3.5 py-2.5 text-left text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-wait disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-gray-100"
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-black/10 bg-white px-4 py-3.5 text-left text-sm outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-wait disabled:opacity-60 dark:border-white/10 dark:bg-gray-800 dark:text-gray-100"
       >
         <span className="min-w-0 flex-1 truncate">
           {selected ? (
@@ -80,9 +80,9 @@ export function Select({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="glass glass-border absolute z-30 mt-1.5 w-full overflow-hidden rounded-2xl py-1.5 shadow-card dark:shadow-card-dark"
+            className="glass-border absolute z-30 mt-1.5 w-full overflow-hidden rounded-2xl bg-white py-1.5 shadow-card dark:bg-gray-800 dark:shadow-card-dark"
           >
-            <div className="max-h-56 overflow-y-auto">
+            <div className="max-h-64 overflow-y-auto">
               {options.map((option) => (
                 <button
                   key={option.value}
@@ -91,7 +91,7 @@ export function Select({
                     onChange(option.value);
                     setIsOpen(false);
                   }}
-                  className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-sm transition hover:bg-black/[0.04] dark:hover:bg-white/10"
+                  className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm transition hover:bg-black/[0.04] dark:hover:bg-white/10"
                 >
                   <span className="min-w-0 flex-1 truncate">
                     <span className="text-gray-800 dark:text-gray-100">{option.label}</span>
@@ -104,14 +104,14 @@ export function Select({
 
             {onAddNew && (
               <>
-                <div className="mx-3.5 my-1 h-px bg-black/[0.06] dark:bg-white/10" />
+                <div className="mx-4 my-1 h-px bg-black/[0.06] dark:bg-white/10" />
                 <button
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
                     onAddNew();
                   }}
-                  className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-sm font-medium text-indigo-600 transition hover:bg-indigo-500/10 dark:text-indigo-400"
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-indigo-600 transition hover:bg-indigo-500/10 dark:text-indigo-400"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {addNewLabel}

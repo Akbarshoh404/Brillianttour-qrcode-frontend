@@ -100,6 +100,18 @@ export function usePermanentlyDeleteDocument() {
   });
 }
 
+export function useDeleteAllTrash() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => documentService.removeAllTrash(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: trashQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["folders"] });
+    },
+  });
+}
+
 export function useSetDocumentActive() {
   const queryClient = useQueryClient();
 

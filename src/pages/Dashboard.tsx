@@ -5,6 +5,7 @@ import { DocumentGrid } from "@/components/documents/DocumentGrid";
 import { QrPreviewModal } from "@/components/documents/QrPreviewModal";
 import { ReplaceModal } from "@/components/documents/ReplaceModal";
 import { UploadModal } from "@/components/documents/UploadModal";
+import { ManageDomainsModal } from "@/components/domains/ManageDomainsModal";
 import { FolderNav } from "@/components/folders/FolderNav";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { TopNav } from "@/components/layout/TopNav";
@@ -20,6 +21,7 @@ export function Dashboard() {
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isManageDomainsOpen, setIsManageDomainsOpen] = useState(false);
   const [replaceTarget, setReplaceTarget] = useState<Document | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [qrPreviewTarget, setQrPreviewTarget] = useState<Document | null>(null);
@@ -33,6 +35,7 @@ export function Dashboard() {
           search={search}
           onSearchChange={setSearch}
           onUploadClick={() => setIsUploadOpen(true)}
+          onManageDomainsClick={() => setIsManageDomainsOpen(true)}
           totalDocuments={data?.total ?? 0}
           storageUsedBytes={data?.storage_used_bytes ?? 0}
           isDark={isDark}
@@ -61,6 +64,7 @@ export function Dashboard() {
       <ReplaceModal document={replaceTarget} onClose={() => setReplaceTarget(null)} />
       <DeleteDialog document={deleteTarget} onClose={() => setDeleteTarget(null)} />
       <QrPreviewModal document={qrPreviewTarget} onClose={() => setQrPreviewTarget(null)} />
+      <ManageDomainsModal isOpen={isManageDomainsOpen} onClose={() => setIsManageDomainsOpen(false)} />
     </DashboardLayout>
   );
 }

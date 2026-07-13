@@ -2,6 +2,7 @@ export interface Document {
   id: number;
   uuid: string;
   title: string;
+  notes: string | null;
   file_size: number;
   file_size_readable: string;
   created_at: string;

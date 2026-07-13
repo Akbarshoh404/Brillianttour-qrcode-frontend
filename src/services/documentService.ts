@@ -7,6 +7,7 @@ export type UploadProgressHandler = (percent: number) => void;
 
 export interface UploadOptions {
   title?: string;
+  notes?: string;
   domainId?: number | null;
   folderId?: number | null;
   onProgress?: UploadProgressHandler;
@@ -47,6 +48,7 @@ export const documentService = {
     const formData = new FormData();
     formData.append("file", file);
     if (options.title) formData.append("title", options.title);
+    if (options.notes) formData.append("notes", options.notes);
     if (options.domainId != null) formData.append("domain_id", String(options.domainId));
     if (options.folderId != null) formData.append("folder_id", String(options.folderId));
 
@@ -81,6 +83,11 @@ export const documentService = {
   /** Irreversible — only for documents already in the trash. */
   async removePermanently(uuid: string): Promise<void> {
     await api.delete(`/documents/trash/${uuid}`);
+  },
+
+  /** Irreversible — permanently deletes every document currently in the trash. */
+  async removeAllTrash(): Promise<void> {
+    await api.delete("/documents/trash");
   },
 
   async disable(uuid: string): Promise<Document> {

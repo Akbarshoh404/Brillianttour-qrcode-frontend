@@ -112,6 +112,13 @@ export function DocumentCardDetails({ document }: { document: Document }) {
         </div>
       </div>
 
+      {document.notes && (
+        <div className="rounded-xl bg-black/[0.03] px-3.5 py-3 dark:bg-white/[0.04]">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Notes</p>
+          <p className="mt-1 whitespace-pre-wrap text-xs text-gray-600 dark:text-gray-300">{document.notes}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Uploaded</p>

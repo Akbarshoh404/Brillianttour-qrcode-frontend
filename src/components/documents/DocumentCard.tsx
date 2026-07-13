@@ -117,7 +117,7 @@ export function DocumentCard({ document, isExpanded, onToggleExpand, onReplace, 
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-50" title={document.title}>
+            <h3 className="truncate text-lg font-bold text-gray-900 dark:text-gray-50" title={document.title}>
               {document.title}
             </h3>
             {!document.is_active && (

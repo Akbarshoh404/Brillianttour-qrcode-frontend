@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { FileStack, HardDrive, LogOut, Moon, Search, Sun, Trash2, Upload } from "lucide-react";
+import { FileStack, Globe2, HardDrive, LogOut, Moon, Search, Sun, Trash2, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,7 @@ interface TopNavProps {
   search: string;
   onSearchChange: (value: string) => void;
   onUploadClick: () => void;
+  onManageDomainsClick: () => void;
   totalDocuments: number;
   storageUsedBytes: number;
   isDark: boolean;
@@ -21,6 +22,7 @@ export function TopNav({
   search,
   onSearchChange,
   onUploadClick,
+  onManageDomainsClick,
   totalDocuments,
   storageUsedBytes,
   isDark,
@@ -66,6 +68,15 @@ export function TopNav({
             <span>used</span>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={onManageDomainsClick}
+          title="Manage domains"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition hover:bg-black/[0.05] dark:text-gray-300 dark:hover:bg-white/10"
+        >
+          <Globe2 className="h-4 w-4" />
+        </button>
 
         <Link
           to="/trash"
